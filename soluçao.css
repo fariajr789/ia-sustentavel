@@ -1,0 +1,387 @@
+/* ===== SOLUÇÃO (estilo corporativo) ===== */
+.solutionWrap{
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.solutionHead{
+  margin: 26px 0 16px;
+}
+.solutionHead h2{
+  margin: 0 0 8px;
+  font-size: 26px;
+  letter-spacing: -.3px;
+}
+.solutionHead p{
+  margin: 0;
+  color: rgba(255,255,255,.72);
+  line-height: 1.6;
+  max-width: 90ch;
+}
+
+/* Layout do mockup (lado a lado) */
+.mockGrid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+/* Card corporativo */
+.mockCard{
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.30);
+  padding: 16px;
+}
+
+.mockHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.mockHead h3{
+  margin:0;
+  font-size: 16px;
+  letter-spacing: .2px;
+}
+.mockTag{
+  font-size: 12px;
+  color: rgba(255,255,255,.70);
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+}
+
+.mockNote{
+  margin-top: 12px;
+  color: rgba(255,255,255,.72);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* ===== Multimídia (device) ===== */
+.device{
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+  overflow: hidden;
+}
+.deviceTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.status{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  color: rgba(255,255,255,.72);
+  font-size: 12.5px;
+}
+.dot{
+  width:9px;height:9px;border-radius:50%;
+}
+.dot.online{
+  background: #37f5a0;
+  box-shadow: 0 0 12px rgba(55,245,160,.5);
+}
+.time{
+  color: rgba(255,255,255,.70);
+  font-size: 12.5px;
+}
+.deviceBody{
+  display:grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 12px;
+  padding: 12px;
+}
+
+/* Mapa */
+.map{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+  padding: 10px;
+  min-height: 260px;
+}
+.mapTitle{
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: .2px;
+  color: rgba(255,255,255,.88);
+  margin-bottom: 8px;
+}
+
+/* AQUI está o "conserto do manchão preto" */
+.route{ width:100%; height: 200px; display:block; }
+.routeLine{
+  fill: none !important;
+  stroke: #00e6ff !important;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 10 10;
+  filter: drop-shadow(0 0 10px rgba(0,230,255,.35));
+}
+.routePoint{ fill:#fff; stroke: rgba(0,0,0,.25); stroke-width:2; }
+.routePoint.start{ fill:#37f5a0; }
+.routePoint.mid{ fill:#ffb020; }
+.routePoint.end{ fill:#ff5d7a; }
+
+.mapLegend{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: rgba(255,255,255,.70);
+  font-size: 12px;
+}
+.legendDot{
+  display:inline-block;
+  width:10px; height:10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.legendDot.start{ background:#37f5a0; }
+.legendDot.mid{ background:#ffb020; }
+.legendDot.end{ background:#ff5d7a; }
+
+/* KPIs */
+.kpis{ display:flex; flex-direction: column; gap: 10px; }
+.kpi{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+  padding: 10px;
+}
+.kpi.alert{
+  border-color: rgba(255,176,32,.35);
+  background: rgba(255,176,32,.08);
+}
+.kpiLabel{ color: rgba(255,255,255,.72); font-size: 12.2px; }
+.kpiValue{ font-weight: 950; font-size: 18px; color:#00e6ff; margin-top: 4px; }
+.kpi.alert .kpiValue{ color:#ffb020; }
+.kpiHint{ color: rgba(255,255,255,.65); font-size: 12px; margin-top: 2px; }
+.meter{
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+  margin-top: 8px;
+}
+.meterFill{
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0,230,255,.95), rgba(55,245,160,.95));
+}
+
+.deviceBottom{
+  display:flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  justify-content:flex-end;
+  flex-wrap: wrap;
+}
+.btnMock{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,230,255,.25);
+  background: rgba(0,230,255,.12);
+  color: rgba(255,255,255,.92);
+  font-weight: 850;
+}
+.btnMock.ghost{
+  border-color: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.85);
+}
+
+/* ===== Sala de comando ===== */
+.controlRoom .summary{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.sumItem{
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 12px;
+}
+.sumLabel{ color: rgba(255,255,255,.70); font-size: 12px; }
+.sumValue{ font-weight: 950; font-size: 16px; margin-top: 6px; }
+.sumValue.accent{ color:#00e6ff; }
+
+.dashGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.screen{
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  overflow:hidden;
+}
+.screenTitle{
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  font-weight: 900;
+  font-size: 13px;
+}
+.screenBody{ padding: 12px; }
+
+.route.small{ height: 140px; }
+.chipRow{ display:flex; gap:8px; flex-wrap:wrap; }
+.chip{
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.82);
+}
+.chip.ok{ border-color: rgba(55,245,160,.25); background: rgba(55,245,160,.08); }
+.chip.warn{ border-color: rgba(255,176,32,.30); background: rgba(255,176,32,.10); }
+
+.bars .barRow{
+  display:grid;
+  grid-template-columns: 64px 1fr 48px;
+  gap: 10px;
+  align-items:center;
+  margin: 10px 0;
+  color: rgba(255,255,255,.84);
+  font-size: 13px;
+}
+.bar{
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow:hidden;
+}
+.bar > div{
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0,230,255,.95), rgba(55,245,160,.95));
+}
+.barVal{ font-weight: 900; }
+.barVal.warn{ color:#ffb020; }
+
+.alerts .alertItem{
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.05);
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.alertItem.warn{ border-color: rgba(255,176,32,.30); background: rgba(255,176,32,.10); }
+.alertItem.ok{ border-color: rgba(55,245,160,.25); background: rgba(55,245,160,.08); }
+
+.report{ display:grid; grid-template-columns: 1fr; gap: 10px; }
+.rep{
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.05);
+}
+.repLabel{ color: rgba(255,255,255,.70); font-size: 12px; }
+.repValue{ font-weight: 950; font-size: 16px; margin-top: 6px; color:#00e6ff; }
+
+@media (max-width: 980px){
+  .mockGrid{ grid-template-columns: 1fr; }
+  .deviceBody{ grid-template-columns: 1fr; }
+  .controlRoom .summary{ grid-template-columns: 1fr 1fr; }
+  .dashGrid{ grid-template-columns: 1fr; }
+}
+
+.mockGrid.pro{
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 18px;
+}
+
+/* ✅ força layout empilhado (multimídia em cima / sala embaixo) */
+.proStack{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:24px;
+}
+
+.proStack .proCard{
+  width:100%;
+}
+
+/* linha de “ao vivo” */
+.liveRow{
+  margin-top: 14px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+/* Painel IA */
+.aiPanel{
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+}
+
+.aiHead{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.aiTitle{
+  font-weight:800;
+  font-size: 18px;
+  letter-spacing: .2px;
+}
+
+.aiBadges{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.aiGrid{
+  margin-top: 14px;
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:12px;
+}
+
+@media(max-width: 980px){
+  .aiGrid{ grid-template-columns: 1fr; }
+}
+
+.aiBox{
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.03);
+}
+
+.aiList{
+  margin: 10px 0 0;
+  padding-left: 18px;
+  opacity: .95;
+}
+
+.aiList li{
+  margin: 6px 0;
+}

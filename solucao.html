@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solução | IA Sustentável</title>
+  <link rel="stylesheet" href="pagina.css">
+  <link rel="stylesheet" href="soluçao.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav__inner">
+    <a class="brand" href="pagina.html">
+      <img src="img/WhatsApp Image 2026-02-24 at 16.51.05.jpeg" alt="Logo" class="brand__logo">
+      <span class="brand__text">IA Sustentável</span>
+    </a>
+    <div class="nav__links">
+      <a href="pagina.html" class="nav__link">Início</a>
+      <a href="solucao.html" class="nav__link nav__link--primary">Solução</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero__inner">
+    <div class="hero__content">
+      <div class="badge">Solução Inteligente com IA</div>
+      <h1>Plataforma integrada de otimização de consumo e eficiência operacional</h1>
+      <p class="hero__subtitle">
+        Nossa tecnologia aplica Inteligência Artificial em toda a operação logística,
+        permitindo alcançar até 15% de redução real no consumo de combustíveis fósseis.
+      </p>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="section__inner">
+    <div class="section__head">
+      <h2>Visão do Multimídia e da Sala de Comando</h2>
+      <p>O que aparece no multimídia do caminhão é refletido na sala de comando em tempo real.</p>
+      <div class="liveRow">
+        <span class="chip">Atualização ao vivo: <strong id="liveTime">--:--:--</strong></span>
+        <span class="chip ok">IA ativa</span>
+      </div>
+    </div>
+
+    <div class="mockGrid pro proStack">
+
+      <!-- =================== MULTIMÍDIA =================== -->
+      <div class="mockCard proCard">
+        <div class="proTop">
+          <div>
+            <div class="proTitle">Multimídia do Caminhão</div>
+            <div class="proSub">Tela operacional para o motorista (tempo real)</div>
+          </div>
+          <div class="proStatus">
+            <span class="dot online"></span>
+            <span>Online (Starlink)</span>
+          </div>
+        </div>
+
+        <div class="proTabs">
+          <button class="proTab active" data-tab="v1-rota">Rota</button>
+          <button class="proTab" data-tab="v1-alertas">Alertas</button>
+          <button class="proTab" data-tab="v1-desempenho">Desempenho</button>
+        </div>
+
+        <!-- TAB: ROTA -->
+        <div class="proPanel active" id="v1-rota">
+          <div class="proGrid">
+            <div class="proMap">
+              <div class="proMapHead">
+                <span class="chip ok">Rota econômica ativa</span>
+                <span class="chip">ETA: <strong id="etaMin">18</strong> min</span>
+              </div>
+
+              <svg class="route proRoute" viewBox="0 0 420 220" aria-label="Mapa com rota">
+                <path class="routeLine" d="M30,160 C70,120 110,190 150,140 C190,90 250,170 290,120 C330,70 360,95 390,55" />
+                <circle class="routePoint start" cx="30" cy="160" r="7" />
+                <circle class="routePoint mid" cx="150" cy="140" r="6" />
+                <circle class="routePoint end" cx="390" cy="55" r="7" />
+              </svg>
+
+              <div class="proLegend">
+                <div><span class="legendDot start"></span> Origem</div>
+                <div><span class="legendDot mid"></span> Ponto crítico</div>
+                <div><span class="legendDot end"></span> Destino</div>
+              </div>
+            </div>
+
+            <div class="proKpis">
+              <div class="proKpi">
+                <div class="proKpiLabel">Eficiência do trajeto</div>
+                <div class="proKpiValue" id="kpiScoreCaminhao">88%</div>
+                <div class="meter"><div class="meterFill" id="meterScore" style="width:88%"></div></div>
+              </div>
+
+              <div class="proKpi">
+                <div class="proKpiLabel">Previsão de consumo</div>
+                <div class="proKpiValue" id="kpiPrevisao">-12%</div>
+                <div class="proKpiHint">vs. rota padrão</div>
+              </div>
+
+              <div class="proKpi warn">
+                <div class="proKpiLabel">Ociosidade</div>
+                <div class="proKpiValue" id="kpiOciosidade">11 min</div>
+                <div class="proKpiHint">motor ligado parado</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="proActions">
+            <button class="proBtn primary" id="btnRecalcular">Recalcular rota</button>
+            <button class="proBtn" id="btnDetalhes">Ver detalhes</button>
+            <button class="proBtn ghost">Meta 15%</button>
+          </div>
+        </div>
+
+        <!-- TAB: ALERTAS -->
+        <div class="proPanel" id="v1-alertas">
+          <div class="proList" id="listaAlertasCaminhao">
+            <div class="proItem warn">⚠ Carregando alertas...</div>
+          </div>
+
+          <div class="proActions">
+            <button class="proBtn primary" id="btnConfirmar">Confirmar ajuste</button>
+            <button class="proBtn" id="btnSilenciar">Silenciar 15 min</button>
+            <button class="proBtn ghost">Ajuda</button>
+          </div>
+        </div>
+
+        <!-- TAB: DESEMPENHO -->
+        <div class="proPanel" id="v1-desempenho">
+          <div class="proMiniGrid">
+            <div class="miniBox">
+              <div class="miniLabel">Velocidade média</div>
+              <div class="miniValue" id="velMedia">34 km/h</div>
+            </div>
+            <div class="miniBox">
+              <div class="miniLabel">RPM médio</div>
+              <div class="miniValue" id="rpmMedio">1.550</div>
+            </div>
+            <div class="miniBox">
+              <div class="miniLabel">Paradas</div>
+              <div class="miniValue" id="paradasTotais">2</div>
+            </div>
+            <div class="miniBox">
+              <div class="miniLabel">Score IA</div>
+              <div class="miniValue" id="scoreIA">A-</div>
+            </div>
+          </div>
+
+          <div class="proActions">
+            <button class="proBtn primary">Gerar resumo</button>
+            <button class="proBtn">Comparar turnos</button>
+            <button class="proBtn ghost">Meta 15%</button>
+          </div>
+        </div>
+
+        <div class="mockNote">
+          <strong>Objetivo no caminhão:</strong> orientar rota, reduzir ociosidade e manter padrão operacional.
+        </div>
+      </div>
+
+      <!-- =================== SALA DE COMANDO =================== -->
+      <div class="mockCard proCard">
+        <div class="proTop">
+          <div>
+            <div class="proTitle">Sala de Comando</div>
+            <div class="proSub">Visão gerencial em tempo real (mesmos dados do veículo)</div>
+          </div>
+          <div class="proStatus">
+            <span class="dot online"></span>
+            <span>Consolidação ativa</span>
+          </div>
+        </div>
+
+        <!-- KPIs (ANUAIS) -->
+        <div class="proSummary">
+          <div class="sumBox">
+            <div class="sumLabel">Consumo anual</div>
+            <div class="sumValue" id="kpiConsumo">--</div>
+          </div>
+          <div class="sumBox">
+            <div class="sumLabel">Meta</div>
+            <div class="sumValue accent" id="kpiMeta">--</div>
+          </div>
+          <div class="sumBox">
+            <div class="sumLabel">Economia (L)</div>
+            <div class="sumValue" id="kpiLitros">--</div>
+          </div>
+          <div class="sumBox">
+            <div class="sumLabel">Economia (R$)</div>
+            <div class="sumValue" id="kpiReais">--</div>
+          </div>
+        </div>
+
+        <!-- ✅ NOVO: KPIs AO VIVO (FROTA) -->
+        <div class="proSummary" style="margin-top:12px;">
+          <div class="sumBox">
+            <div class="sumLabel">Consumo atual (frota)</div>
+            <div class="sumValue" id="fConsumoLph">-- L/h</div>
+          </div>
+          <div class="sumBox">
+            <div class="sumLabel">Economia vs padrão</div>
+            <div class="sumValue accent" id="fEcoPct">--%</div>
+          </div>
+          <div class="sumBox">
+            <div class="sumLabel">Economia acumulada (L)</div>
+            <div class="sumValue" id="fEcoL">-- L</div>
+          </div>
+          <div class="sumBox">
+            <div class="sumLabel">Economia acumulada (R$)</div>
+            <div class="sumValue" id="fEcoR">--</div>
+          </div>
+        </div>
+
+        <!-- Painel IA -->
+        <div class="aiPanel">
+          <div class="aiHead">
+            <div class="aiTitle">IA da Operação (Frota)</div>
+            <div class="aiBadges">
+              <span class="chip ok">Score: <strong id="aiScore">A-</strong></span>
+              <span class="chip">Fator consumo: <strong id="aiFator">1.00</strong></span>
+              <span class="chip">Modo: <strong id="aiModo">econômica</strong></span>
+              <span class="chip">Vel alvo: <strong id="aiVel">34</strong> km/h</span>
+            </div>
+          </div>
+
+          <div class="aiGrid">
+            <div class="aiBox">
+              <div class="boxTitle">Recomendações</div>
+              <ul id="aiRecs" class="aiList"><li>Carregando...</li></ul>
+            </div>
+            <div class="aiBox">
+              <div class="boxTitle">Ações automáticas</div>
+              <ul id="aiAcoes" class="aiList"><li>Carregando...</li></ul>
+            </div>
+            <div class="aiBox">
+              <div class="boxTitle">Motivos</div>
+              <ul id="aiMotivos" class="aiList"><li>Carregando...</li></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="proTabs">
+          <button class="proTab active" data-tab="c1-visao">Visão geral</button>
+          <button class="proTab" data-tab="c1-ranking">Ranking</button>
+          <button class="proTab" data-tab="c1-relatorio">Relatório</button>
+        </div>
+
+        <!-- TAB: VISÃO -->
+        <div class="proPanel active" id="c1-visao">
+          <div class="proTwo">
+            <div class="proBox">
+              <div class="boxTitle">Mapa + Rotas</div>
+              <svg class="route proRoute small" viewBox="0 0 420 220">
+                <path class="routeLine" d="M30,160 C70,120 110,190 150,140 C190,90 250,170 290,120 C330,70 360,95 390,55" />
+                <circle class="routePoint start" cx="30" cy="160" r="7" />
+                <circle class="routePoint end" cx="390" cy="55" r="7" />
+              </svg>
+              <div class="chipRow">
+                <span class="chip ok">Rota econômica</span>
+                <span class="chip warn">Ociosidade</span>
+                <span class="chip" id="turnoTxt">Turno A</span>
+              </div>
+            </div>
+
+            <div class="proBox">
+              <div class="boxTitle">Alertas críticos</div>
+              <div class="proList compact" id="listaAlertasCentral">
+                <div class="proItem warn">⚠ Carregando alertas...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: RANKING -->
+        <div class="proPanel" id="c1-ranking">
+          <div class="proBars" id="rankingCentral">
+            <div class="barRow">
+              <span>Carregando...</span>
+              <div class="bar"><div style="width:30%"></div></div>
+              <span class="barVal">--</span>
+            </div>
+          </div>
+
+          <div class="proActions">
+            <button class="proBtn primary">Ações semanais</button>
+            <button class="proBtn">Exportar</button>
+            <button class="proBtn ghost">Treinamento</button>
+          </div>
+        </div>
+
+        <!-- TAB: RELATÓRIO -->
+        <div class="proPanel" id="c1-relatorio">
+          <div class="proReport">
+            <div class="rep">
+              <div class="repLabel">Economia (Litros)</div>
+              <div class="repValue" id="repLitros">--</div>
+            </div>
+            <div class="rep">
+              <div class="repLabel">Economia (R$)</div>
+              <div class="repValue" id="repReais">--</div>
+            </div>
+            <div class="rep">
+              <div class="repLabel">CO₂ evitado</div>
+              <div class="repValue" id="repCo2">--</div>
+            </div>
+          </div>
+
+          <div class="proActions">
+            <button class="proBtn primary">Gerar PDF</button>
+            <button class="proBtn">Comparar meses</button>
+            <button class="proBtn ghost">Auditoria</button>
+          </div>
+        </div>
+
+        <div class="mockNote">
+          <strong>Objetivo na central:</strong> padronizar operação, atacar desperdício e comprovar economia.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="footer__left">
+      <div class="brand brand--footer">
+        <img src="img/WhatsApp Image 2026-02-24 at 16.51.05.jpeg" alt="Logo" class="brand__logo">
+        <span class="brand__text">IA Sustentável</span>
+      </div>
+      <p>Projeto SENAI • Tecnologia aplicada à eficiência energética.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+  // ============ helpers ============
+  const byId = (id) => document.getElementById(id);
+  const setText = (id, v) => { const el = byId(id); if(el) el.textContent = v; };
+  const toM = (n) => (n/1000000).toFixed(3).replace('.', ',') + "M";
+  const toBRL = (n) => (Number(n) || 0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
+
+  const ulSet = (id, arr) => {
+    const ul = byId(id);
+    if(!ul) return;
+    ul.innerHTML = "";
+    (arr && arr.length ? arr : ["Sem recomendações no momento."]).forEach(t => {
+      const li = document.createElement("li");
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+  };
+
+  function renderAlertas(containerId, alertas){
+    const box = byId(containerId);
+    if(!box) return;
+    box.innerHTML = "";
+    (alertas || []).forEach(a => {
+      const div = document.createElement("div");
+      div.className = "proItem " + (a.nivel === "warn" ? "warn" : "ok");
+      div.textContent = (a.nivel === "warn" ? "⚠ " : "✅ ") + a.texto;
+      box.appendChild(div);
+    });
+  }
+
+  function renderRanking(veiculos){
+    const wrap = byId("rankingCentral");
+    if(!wrap) return;
+    const sorted = [...(veiculos||[])].sort((a,b)=>b.score-a.score);
+    wrap.innerHTML = "";
+    sorted.forEach(v => {
+      const row = document.createElement("div");
+      row.className = "barRow";
+      row.innerHTML = `
+        <span>${v.id}</span>
+        <div class="bar"><div style="width:${v.score}%"></div></div>
+        <span class="barVal ${v.score < 75 ? "warn" : ""}">${v.score}%</span>
+      `;
+      wrap.appendChild(row);
+    });
+  }
+
+  // ============ tabs ============
+  function initTabs(){
+    document.querySelectorAll('.proTabs').forEach(group => {
+      const tabs = group.querySelectorAll('.proTab');
+      tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          btn.classList.add('active');
+
+          const root = group.closest('.proCard');
+          root.querySelectorAll('.proPanel').forEach(p => p.classList.remove('active'));
+          const target = root.querySelector('#' + btn.dataset.tab);
+          if (target) target.classList.add('active');
+        });
+      });
+    });
+  }
+
+  // ============ KPIs macro ============
+  async function loadKpis(){
+    try{
+      const r = await fetch("/api/dados");
+      const d = await r.json();
+      setText("kpiConsumo", toM(d.consumoAnualLitros) + " L");
+      setText("kpiMeta", d.reducaoCombustivel);
+      setText("kpiLitros", toM(d.litrosEconomizados) + " L");
+      setText("kpiReais", d.economiaAnual);
+      setText("repLitros", d.litrosEconomizados.toLocaleString('pt-BR') + " L");
+      setText("repReais", d.economiaAnual);
+      setText("repCo2", d.co2EvitadoTon.toLocaleString('pt-BR') + " t/ano");
+    }catch(e){
+      console.error(e);
+    }
+  }
+
+  // ============ botões ============
+  async function post(url){
+    const r = await fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" } });
+    return r.json().catch(()=>({}));
+  }
+
+  function initButtons(){
+    const btnRecalcular = byId("btnRecalcular");
+    const btnSilenciar = byId("btnSilenciar");
+    const btnConfirmar = byId("btnConfirmar");
+
+    if(btnRecalcular) btnRecalcular.addEventListener("click", async () => {
+      await post("/api/acao/recalcular-rota");
+    });
+
+    if(btnSilenciar) btnSilenciar.addEventListener("click", async () => {
+      await post("/api/acao/silenciar");
+    });
+
+    if(btnConfirmar) btnConfirmar.addEventListener("click", async () => {
+      await post("/api/acao/confirmar-ajuste");
+    });
+  }
+
+  // ============ socket live ============
+  const socket = io();
+
+  socket.on("telemetria:update", (payload) => {
+    if(payload.updatedAt){
+      setText("liveTime", new Date(payload.updatedAt).toLocaleTimeString("pt-BR"));
+    }
+
+    // operação
+    if(payload.operacao){
+      setText("etaMin", payload.operacao.etaMin ?? 18);
+      setText("velMedia", (payload.operacao.velocidadeAlvo ?? 34) + " km/h");
+      setText("turnoTxt", "Turno " + (payload.operacao.turno || "A"));
+    }
+
+    // frota ao vivo
+    if(payload.frotaLive){
+      setText("fConsumoLph", (payload.frotaLive.consumoAtualLph ?? 0).toLocaleString("pt-BR") + " L/h");
+      setText("fEcoPct", (payload.frotaLive.economiaPct ?? 0).toLocaleString("pt-BR") + "%");
+      setText("fEcoL", (payload.frotaLive.economiaL ?? 0).toLocaleString("pt-BR") + " L");
+      setText("fEcoR", toBRL(payload.frotaLive["economiaR$"] ?? 0));
+    }
+
+    // veículos (tela do multimídia mostra um “exemplo”: o pior score)
+    if(payload.veiculos && payload.veiculos.length){
+      const pior = [...payload.veiculos].sort((a,b)=>a.score-b.score)[0];
+      setText("kpiScoreCaminhao", pior.score + "%");
+      setText("kpiOciosidade", pior.ociosidadeMin + " min");
+      setText("kpiPrevisao", (pior.previsao) + "%");
+
+      const meter = byId("meterScore");
+      if(meter) meter.style.width = pior.score + "%";
+
+      // agregados para Desempenho
+      const rpmMed = Math.round(payload.veiculos.reduce((s,v)=>s+v.rpm,0)/payload.veiculos.length);
+      const paradas = payload.veiculos.reduce((s,v)=>s+v.paradas,0);
+      setText("rpmMedio", rpmMed.toLocaleString("pt-BR"));
+      setText("paradasTotais", paradas);
+
+      renderRanking(payload.veiculos);
+    }
+
+    // alertas
+    if(payload.alertas){
+      renderAlertas("listaAlertasCaminhao", payload.alertas);
+      renderAlertas("listaAlertasCentral", payload.alertas);
+    }
+
+    // IA
+    if(payload.ai){
+      setText("aiScore", payload.ai.score || "A-");
+      setText("aiFator", payload.ai.fatorConsumo ?? "1.00");
+      setText("aiModo", payload.ai.modoRota || "economica");
+      setText("aiVel", payload.ai.velocidadeAlvo ?? 34);
+      setText("scoreIA", payload.ai.score || "A-");
+
+      ulSet("aiRecs", payload.ai.recomendacoes || []);
+      ulSet("aiAcoes", payload.ai.acaoAutomatica || []);
+      ulSet("aiMotivos", payload.ai.motivos || []);
+    }
+  });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    initTabs();
+    initButtons();
+    loadKpis();
+  });
+</script>
+
+</body>
+</html>
