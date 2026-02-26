@@ -6,7 +6,23 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+// ✅ MUDANÇA MÍNIMA: CORS liberado pro Render / domínio
+const io = new Server(server, {
+  cors: { origin: "*", methods: ["GET", "POST"] }
+});
+
+// (Opcional) OpenAI instalado — só usaremos se você decidir chamar API depois
+// Não é necessário pra IA “simulada” funcionar.
+let openai = null;
+try {
+  const OpenAI = require("openai");
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+} catch (_) {
+  // ok: sem openai
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
@@ -16,57 +32,51 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "solucao.html"));
 });
 
+// ✅ MUDANÇA MÍNIMA: rota health (Render)
+app.get("/health", (req, res) => {
+  res.json({ ok: true, time: new Date().toISOString() });
+});
+
 // ===== CONFIG =====
 const CONFIG = {
+  // Macro/Anual (para os cards anuais que você já tinha)
   consumoAnualLitros: 15_120_000,
   metaReducao: 0.15,
   dieselPrecoLitro: 6.0,
   co2KgPorLitro: 2.68,
 
-  // ✅ parâmetros de simulação do caminhão
-  consumoBaseLph: 28,         // L/h em condição “normal”
-  consumoPadraoMult: 1.00,    // rota padrão
-  consumoEcoMult: 0.88,       // rota econômica (12% melhor)
-  kmPorHoraBase: 34,          // “vel média” base (antes de ajustes)
+  // ✅ Modelo AO VIVO da FROTA (simulação)
+  // consumoBaseLph: base de consumo por caminhão em L/h (ajuste como quiser)
+  consumoBaseLph: 38, // L/h por caminhão em situação “padrão”
+  consumoPadraoMult: 1.0,
+  consumoEcoMult: 0.90, // rota econômica reduz ~10% (ajuste conforme narrativa)
 };
 
 // ===== ESTADO =====
 const state = {
   updatedAt: new Date().toISOString(),
 
+  // Macro (anual)
   consumoAnualLitros: CONFIG.consumoAnualLitros,
   metaReducao: CONFIG.metaReducao,
-
   litrosEconomizados: 0,
   economiaReais: 0,
   co2EvitadoTon: 0,
 
+  // Operação (cenário da mina)
   operacao: {
     rotaMode: "economica", // economica | padrao | rapida
-    velocidadeAlvo: 34,    // km/h
+    velocidadeAlvo: 34, // km/h
     etaMin: 18,
-    clima: "seco",         // seco | chuva
-    solo: "regular",       // regular | lama
-    inclinacao: 6,         // %
-    cargaTon: 28,          // t
+    clima: "seco", // seco | chuva
+    solo: "regular", // regular | lama
+    inclinacao: 6, // %
+    cargaTon: 28, // t
     turno: "A",
     ociosidadeMin: 11,
   },
 
-  // ✅ “Rota atual” (KPIs do caminhão em andamento)
-  rotaAtual: {
-    ativa: true,
-    distanciaKm: 18,          // distância da viagem simulada
-    kmRestante: 18,
-    consumoPadraoL: 0,
-    consumoRealL: 0,
-    economiaL: 0,
-    economiaPct: 0,
-    economiaR$: 0,
-    consumoAtualLph: 0,
-    iniciouEm: Date.now(),
-  },
-
+  // Frota
   veiculos: [
     { id: "CAM-01", nome: "Caminhão 01", score: 88, status: "online", ociosidadeMin: 6, previsao: -9, rpm: 1500, paradas: 1 },
     { id: "CAM-07", nome: "Caminhão 07", score: 72, status: "online", ociosidadeMin: 11, previsao: -6, rpm: 1650, paradas: 2 },
@@ -74,6 +84,19 @@ const state = {
     { id: "CAM-18", nome: "Caminhão 18", score: 79, status: "online", ociosidadeMin: 8, previsao: -7, rpm: 1580, paradas: 1 },
   ],
 
+  // ✅ KPIs AO VIVO DA FROTA (acumulados)
+  frotaLive: {
+    ativa: true,
+    consumoPadraoL: 0,   // litros acumulados se fosse padrão
+    consumoRealL: 0,     // litros acumulados com estratégia atual
+    economiaL: 0,        // litros economizados acumulados
+    economiaPct: 0,      // % economizando vs padrão
+    economiaReais: 0,    // ✅ (melhor que "economiaR$")
+    consumoAtualLph: 0,  // L/h somado da frota (instante)
+    iniciouEm: Date.now(),
+  },
+
+  // Alertas + IA
   alertas: [],
   ai: {
     score: "A-",
@@ -84,9 +107,9 @@ const state = {
     modoRota: "economica",
     velocidadeAlvo: 34,
     fatorConsumo: 1.0,
-    scoreMedio: 0,
     piorVeiculo: "",
     melhorVeiculo: "",
+    scoreMedio: 0,
   },
 
   flags: {
@@ -110,6 +133,74 @@ function jitter(n, pct = 0.03) {
 }
 function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
 
+// ===== MODELO DE CONSUMO (FROTA AO VIVO) =====
+function estimarFatorConsumoVeiculo({ inclinacao, clima, solo, cargaTon, velocidadeAlvo, ociosidadeMin }) {
+  let fator = 1.0;
+
+  fator += clamp(inclinacao, 0, 12) * 0.012; // subida pesa
+  fator += clamp(cargaTon, 0, 40) * 0.006;  // carga
+  fator += (clima === "chuva") ? 0.05 : 0.0;
+  fator += (solo === "lama") ? 0.07 : 0.0;
+  fator += clamp(velocidadeAlvo - 30, -10, 20) * 0.008; // velocidade fora da faixa
+  fator += clamp(ociosidadeMin, 0, 20) * 0.01; // ociosidade
+
+  return Number(fator.toFixed(2));
+}
+
+function consumoLphPorVeiculo(v) {
+  const fator = estimarFatorConsumoVeiculo({
+    inclinacao: state.operacao.inclinacao,
+    clima: state.operacao.clima,
+    solo: state.operacao.solo,
+    cargaTon: state.operacao.cargaTon,
+    velocidadeAlvo: state.operacao.velocidadeAlvo,
+    ociosidadeMin: v.ociosidadeMin,
+  });
+
+  const multRota =
+    state.operacao.rotaMode === "economica"
+      ? CONFIG.consumoEcoMult
+      : CONFIG.consumoPadraoMult;
+
+  const realLph = CONFIG.consumoBaseLph * fator * multRota;
+  const padraoLph = CONFIG.consumoBaseLph * fator * CONFIG.consumoPadraoMult;
+
+  return { fator, realLph, padraoLph };
+}
+
+function atualizarFrotaLive(dtSeg) {
+  if (!state.frotaLive?.ativa) return;
+
+  let realTotalLph = 0;
+  let padraoTotalLph = 0;
+
+  for (const v of state.veiculos) {
+    const { realLph, padraoLph } = consumoLphPorVeiculo(v);
+    realTotalLph += realLph;
+    padraoTotalLph += padraoLph;
+  }
+
+  const realLitros = realTotalLph * (dtSeg / 3600);
+  const padraoLitros = padraoTotalLph * (dtSeg / 3600);
+
+  state.frotaLive.consumoRealL += realLitros;
+  state.frotaLive.consumoPadraoL += padraoLitros;
+
+  const economiaL = Math.max(0, state.frotaLive.consumoPadraoL - state.frotaLive.consumoRealL);
+  const economiaPct = (state.frotaLive.consumoPadraoL > 0)
+    ? (economiaL / state.frotaLive.consumoPadraoL) * 100
+    : 0;
+
+  state.frotaLive.economiaL = economiaL;
+  state.frotaLive.economiaPct = Number(economiaPct.toFixed(1));
+
+  // ✅ MUDANÇA MÍNIMA: nome simples (sem "$" no campo)
+  state.frotaLive.economiaReais = economiaL * CONFIG.dieselPrecoLitro;
+
+  state.frotaLive.consumoAtualLph = Number(realTotalLph.toFixed(1));
+}
+
+// ===== IA (FROTA - “empresa”) =====
 function scoreToGrade(score){
   if(score >= 92) return "A+";
   if(score >= 88) return "A";
@@ -120,135 +211,71 @@ function scoreToGrade(score){
   return "C";
 }
 
-// ===== Modelo de consumo (leve, mas “realista”) =====
-function estimarFatorConsumo({ inclinacao, clima, solo, cargaTon, velocidadeAlvo, ociosidadeMin }) {
-  let fator = 1.0;
-  fator += clamp(inclinacao, 0, 12) * 0.012;
-  fator += clamp(cargaTon, 0, 40) * 0.006;
-  fator += (clima === "chuva") ? 0.05 : 0.0;
-  fator += (solo === "lama") ? 0.07 : 0.0;
-  fator += clamp(velocidadeAlvo - 30, -10, 20) * 0.008;
-  fator += clamp(ociosidadeMin, 0, 20) * 0.01;
-  return Number(fator.toFixed(2));
-}
-
-function calcularConsumoLph() {
-  const fator = estimarFatorConsumo(state.operacao);
-  const multRota = (state.operacao.rotaMode === "economica")
-    ? CONFIG.consumoEcoMult
-    : CONFIG.consumoPadraoMult;
-
-  const consumoAtualLph = CONFIG.consumoBaseLph * fator * multRota;
-  return { fator, consumoAtualLph };
-}
-
-// ===== Atualiza rota atual acumulando litros e economia =====
-function atualizarRotaAtual(dtSeg) {
-  if (!state.rotaAtual.ativa) return;
-
-  const { fator, consumoAtualLph } = calcularConsumoLph();
-
-  // “padrão” = consumo base * fator * (rota padrão)
-  const consumoPadraoLph = CONFIG.consumoBaseLph * fator * CONFIG.consumoPadraoMult;
-
-  // litros neste intervalo
-  const litrosReal = consumoAtualLph * (dtSeg / 3600);
-  const litrosPadrao = consumoPadraoLph * (dtSeg / 3600);
-
-  state.rotaAtual.consumoRealL += litrosReal;
-  state.rotaAtual.consumoPadraoL += litrosPadrao;
-
-  // km rodados (aprox): velocidade alvo (km/h) * tempo
-  const kmRodados = (state.operacao.velocidadeAlvo * (dtSeg / 3600));
-  state.rotaAtual.kmRestante = Math.max(0, state.rotaAtual.kmRestante - kmRodados);
-
-  // ETA (min)
-  state.operacao.etaMin = Math.max(1, Math.round((state.rotaAtual.kmRestante / Math.max(1, state.operacao.velocidadeAlvo)) * 60));
-
-  // economia
-  const economiaL = Math.max(0, state.rotaAtual.consumoPadraoL - state.rotaAtual.consumoRealL);
-  const economiaPct = (state.rotaAtual.consumoPadraoL > 0)
-    ? (economiaL / state.rotaAtual.consumoPadraoL) * 100
-    : 0;
-
-  state.rotaAtual.economiaL = economiaL;
-  state.rotaAtual.economiaPct = Number(economiaPct.toFixed(1));
-  state.rotaAtual["economiaR$"] = economiaL * CONFIG.dieselPrecoLitro;
-  state.rotaAtual.consumoAtualLph = Number(consumoAtualLph.toFixed(1));
-
-  // fim da rota -> reinicia automaticamente
-  if (state.rotaAtual.kmRestante <= 0) {
-    state.rotaAtual.distanciaKm = pick([12, 18, 24, 30]);
-    state.rotaAtual.kmRestante = state.rotaAtual.distanciaKm;
-    state.rotaAtual.consumoPadraoL = 0;
-    state.rotaAtual.consumoRealL = 0;
-    state.rotaAtual.economiaL = 0;
-    state.rotaAtual.economiaPct = 0;
-    state.rotaAtual["economiaR$"] = 0;
-    state.rotaAtual.iniciouEm = Date.now();
-  }
-}
-
-// ===== IA (textos melhores) =====
 function gerarIA() {
-  const vPior = [...state.veiculos].sort((a,b) => a.score - b.score)[0];
-  const vMelhor = [...state.veiculos].sort((a,b) => b.score - a.score)[0];
+  const sortedAsc = [...state.veiculos].sort((a,b)=>a.score-b.score);
+  const sortedDesc = [...state.veiculos].sort((a,b)=>b.score-a.score);
 
-  const fator = estimarFatorConsumo(state.operacao);
+  const vPior = sortedAsc[0];
+  const vPior2 = sortedAsc[1] || sortedAsc[0];
+  const vMelhor = sortedDesc[0];
+
+  const fatores = state.veiculos.map(v => consumoLphPorVeiculo(v).fator);
+  const fatorMedio = Number((fatores.reduce((s,x)=>s+x,0) / fatores.length).toFixed(2));
+
+  const scoreMedio = Math.round(state.veiculos.reduce((s,v)=>s+v.score,0) / state.veiculos.length);
+  const grade = scoreToGrade(scoreMedio);
+
+  const ociosidadeTotalMin = state.veiculos.reduce((s,v)=>s+v.ociosidadeMin,0);
+  const perdaOciosidadeL = (ociosidadeTotalMin / 60) * 3.2;
 
   const recomendacoes = [];
   const acaoAutomatica = [];
   const motivos = [];
 
-  // Regras “de empresa”
-  if (vPior.ociosidadeMin >= 10) {
-    recomendacoes.push(`Reduzir ociosidade do ${vPior.id} de ${vPior.ociosidadeMin} min para < 5 min (prioridade alta)`);
-    acaoAutomatica.push("Acionar alerta no multimídia: 'Desligar motor em parada > 3 min'");
-    motivos.push("Ociosidade é consumo puro sem produzir; é a ação mais rápida para economizar.");
+  if (ociosidadeTotalMin >= 20) {
+    recomendacoes.push(`Reduzir ociosidade da frota (total ${ociosidadeTotalMin} min).`);
+    recomendacoes.push(`Prioridade: ${vPior.id} (${vPior.ociosidadeMin} min) e ${vPior2.id} (${vPior2.ociosidadeMin} min).`);
+    motivos.push(`Ociosidade estimada gera ~${perdaOciosidadeL.toFixed(1)} L perdidos no ciclo atual.`);
+    acaoAutomatica.push("Enviar alerta de desligamento + checklist de parada para os 2 piores.");
   }
 
   if (vPior.score <= 75) {
-    recomendacoes.push(`Padronizar condução econômica no ${vPior.id}: foco em aceleração suave e frenagem antecipada`);
-    acaoAutomatica.push("Ativar modo 'velocidade segura' + lembrete de condução estável");
-    motivos.push("Score baixo indica padrão fora do ideal (picos de aceleração/frenagem aumentam consumo).");
+    recomendacoes.push(`Padronizar condução econômica: foco em ${vPior.id} (score ${vPior.score}%).`);
+    motivos.push("Score baixo indica aceleração/frenagem fora do ideal, aumentando consumo.");
+    acaoAutomatica.push("Aplicar perfil de velocidade segura para o veículo com pior score.");
   }
 
   if (state.operacao.clima === "chuva" || state.operacao.solo === "lama") {
-    recomendacoes.push("Evitar trechos críticos e manter rota econômica até normalizar condições");
-    acaoAutomatica.push("Forçar rota econômica + restrição de risco (chuva/solo ruim)");
-    motivos.push("Condição adversa aumenta arrasto, patinagem e exige mais torque (consumo sobe).");
+    recomendacoes.push("Aplicar restrição de risco: evitar trechos com solo ruim/chuva.");
+    motivos.push("Condição adversa aumenta consumo e risco de patinagem/parada.");
+    acaoAutomatica.push("Forçar modo de rota econômica com restrição de risco.");
     state.operacao.rotaMode = "economica";
   }
 
-  // decisão de velocidade (com justificativa)
   let novaVel = state.operacao.velocidadeAlvo;
 
-  if (fator >= 1.25) {
-    const alvo = clamp(novaVel - 4, 22, 40);
-    if (alvo !== novaVel) {
-      novaVel = alvo;
-      acaoAutomatica.push(`Ajustar velocidade alvo para ${novaVel} km/h (estabilizar consumo)`);
-      motivos.push(`Fator de consumo ${fator} indica tendência de gasto elevado; reduzir velocidade estabiliza.`);
-    }
-  } else if (fator <= 1.10 && vMelhor.score >= 90) {
+  if (fatorMedio > 1.25) {
+    novaVel = clamp(novaVel - 4, 22, 40);
+    acaoAutomatica.push(`Reduzir velocidade alvo da frota para ${novaVel} km/h (estabiliza consumo).`);
+    motivos.push("Modelo preditivo indica consumo elevado: reduzir velocidade melhora estabilidade e economia.");
+  } else if (fatorMedio < 1.10 && scoreMedio > 88) {
     novaVel = clamp(novaVel + 1, 22, 40);
   }
 
   state.operacao.velocidadeAlvo = novaVel;
 
-  // alertas
   const alertas = [];
   if (Date.now() > state.flags.silenciarAte) {
     if (vPior.ociosidadeMin >= 10) alertas.push({ nivel: "warn", texto: `${vPior.id}: ociosidade ${vPior.ociosidadeMin} min` });
     if (vPior.score <= 75) alertas.push({ nivel: "warn", texto: `${vPior.id}: eficiência baixa (${vPior.score}%)` });
+    if (state.operacao.clima === "chuva") alertas.push({ nivel: "warn", texto: `Clima: chuva — aumentar cautela e rota econômica` });
+    if (state.operacao.solo === "lama") alertas.push({ nivel: "warn", texto: `Solo: lama — risco de patinagem e maior consumo` });
   } else {
     alertas.push({ nivel: "ok", texto: "Alertas silenciados temporariamente (15 min)" });
   }
-  alertas.push({ nivel: "ok", texto: `Melhor desempenho: ${vMelhor.id} (${vMelhor.score}%)` });
-  alertas.push({ nivel: "ok", texto: `IA: modo ${state.operacao.rotaMode} • vel ${state.operacao.velocidadeAlvo} km/h` });
 
-  const scoreMedio = Math.round(state.veiculos.reduce((s,v)=>s+v.score,0) / state.veiculos.length);
-  const grade = scoreToGrade(scoreMedio);
+  alertas.push({ nivel: "ok", texto: `Melhor desempenho: ${vMelhor.id} (${vMelhor.score}%)` });
+  alertas.push({ nivel: "ok", texto: `Frota: score médio ${scoreMedio}% • modo ${state.operacao.rotaMode} • vel ${state.operacao.velocidadeAlvo} km/h` });
 
   state.alertas = alertas;
 
@@ -258,11 +285,11 @@ function gerarIA() {
     acaoAutomatica: acaoAutomatica.slice(0, 4),
     motivos: motivos.slice(0, 4),
     proximoPasso: recomendacoes[0]
-      ? "Executar a 1ª recomendação e reavaliar em 10 min (tendência de consumo)."
-      : "Operação está estável; manter padrão e monitorar.",
+      ? "Executar ações sugeridas e reavaliar em 10 min"
+      : "Operação está estável; manter padrão e monitorar",
     modoRota: state.operacao.rotaMode,
     velocidadeAlvo: state.operacao.velocidadeAlvo,
-    fatorConsumo: fator,
+    fatorConsumo: fatorMedio,
     piorVeiculo: vPior.id,
     melhorVeiculo: vMelhor.id,
     scoreMedio,
@@ -277,13 +304,11 @@ setInterval(() => {
   const dtSeg = Math.max(1, (now - lastTick) / 1000);
   lastTick = now;
 
-  // varia cenário
   if (Math.random() < 0.18) state.operacao.clima = pick(["seco", "chuva"]);
   if (Math.random() < 0.15) state.operacao.solo = pick(["regular", "lama"]);
   state.operacao.inclinacao = clamp(jitter(state.operacao.inclinacao, 0.20), 0, 12);
   state.operacao.cargaTon = clamp(jitter(state.operacao.cargaTon, 0.10), 10, 40);
 
-  // veículos variam
   state.veiculos = state.veiculos.map(v => {
     const score = clamp(jitter(v.score, 0.06), 60, 98);
     const ociosidadeMin = clamp(jitter(v.ociosidadeMin, 0.25), 0, 30);
@@ -293,22 +318,18 @@ setInterval(() => {
     return { ...v, score, ociosidadeMin, previsao, rpm, paradas };
   });
 
-  // IA decide
   gerarIA();
-
-  // atualiza KPIs da rota atual
-  atualizarRotaAtual(dtSeg);
+  atualizarFrotaLive(dtSeg);
 
   state.updatedAt = new Date().toISOString();
 
-  // emite
   io.emit("telemetria:update", {
     updatedAt: state.updatedAt,
     operacao: state.operacao,
-    rotaAtual: state.rotaAtual,
     veiculos: state.veiculos,
     alertas: state.alertas,
     ai: state.ai,
+    frotaLive: state.frotaLive,
   });
 }, 2500);
 
@@ -325,17 +346,32 @@ app.get("/api/dados", (req, res) => {
   });
 });
 
-app.get("/api/rota", (req, res) => {
-  res.json(state.rotaAtual);
+app.get("/api/frota", (req, res) => {
+  res.json({
+    ...state.frotaLive,
+    updatedAt: state.updatedAt,
+    clima: state.operacao.clima,
+    solo: state.operacao.solo,
+    rotaMode: state.operacao.rotaMode,
+    velAlvo: state.operacao.velocidadeAlvo,
+  });
 });
 
+app.get("/api/ai", (req, res) => {
+  res.json(state.ai);
+});
+
+// ===== AÇÕES (botões) =====
 app.post("/api/acao/recalcular-rota", (req, res) => {
   state.operacao.rotaMode = "economica";
+  state.operacao.etaMin = clamp(state.operacao.etaMin - 1, 8, 40);
+
   state.veiculos = state.veiculos.map(v => ({
     ...v,
     previsao: clamp(v.previsao - 1, -20, -1),
     score: clamp(v.score + 2, 60, 98),
   }));
+
   gerarIA();
   res.json({ ok: true, rotaMode: state.operacao.rotaMode });
 });
@@ -353,6 +389,7 @@ app.post("/api/acao/confirmar-ajuste", (req, res) => {
     rpm: clamp(v.rpm - 80, 1100, 2100),
     score: clamp(v.score + 1, 60, 98),
   }));
+
   gerarIA();
   res.json({ ok: true });
 });
@@ -362,12 +399,13 @@ io.on("connection", (socket) => {
   socket.emit("telemetria:update", {
     updatedAt: state.updatedAt,
     operacao: state.operacao,
-    rotaAtual: state.rotaAtual,
     veiculos: state.veiculos,
     alertas: state.alertas,
     ai: state.ai,
+    frotaLive: state.frotaLive,
   });
 });
 
+// ✅ Render usa PORT por variável de ambiente
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`✅ Servidor rodando em http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
